@@ -1,38 +1,41 @@
-const MongoClient = require('mongodb').MongoClient; 
-const assert = require('assert'); 
+const MongoClient = require('mongodb').MongoClient;
+const assert = require('assert');
+const dboper = require('./operations');
 
-const url = 'mongodb://localhost:27017/'; 
-const dbname = 'conFusion'; 
-
+const url = 'mongodb://localhost:27017/';
+const dbname = 'conFusion';
+/**
+ * The Node MongoDB Driver
+ */
 //Access Server
 MongoClient.connect(url, (err, client) => {
-    assert.equal(err, null); 
+    assert.strictEqual(err, null);
 
-    console.log('Connected correctly to server'); 
-//connect to DB
-    const db = client.db(dbname); 
-    const collection = db.collection('dishes'); 
-/**
- * Two Arguements: Insert a document & a callback function
- */
-    collection.insertOne({"name": "Uthappizza", "description": "test"},(err, result) => {
-        assert.strictEqual(err, null); 
+    console.log('Connected correctly to server');
+    //connect to DB
+    const db = client.db(dbname);
 
-        console.log('After Insert:\n'); 
-        console.log(result.ops); 
+    dboper.insertDocument(db, { name: "Vadonut", description: 'Test' }, 'dishes', (result) => {
+        //ops tells you how many operations have been carried out
+        console.log('Insert Document:\n', result.ops);
 
-        collection.find({}).toArray((err, docs) => {
-            //check to make sure that error is not null
-            assert.strictEqual(err, null); 
+        dboper.findDocuments(db, 'dishes', (docs) => {
+            console.log('Found Documents:\n', docs);
 
-            console.log('Found:\n'); 
-            console.log(docs); 
-            
-            db.dropCollection('dishes', (err,result) => {
-                assert.strictEqual(err, null); 
+            dboper.updateDocument(db, { name: "Vadonut"}, {description: 'Updated Test' }, 'dishes', (result) => {
+                console.log('Updated Document:\n', result.result);
 
-                client.close(); 
+                dboper.findDocuments(db, 'dishes', (docs) => {
+                    console.log('Found Documents:\n', docs);
+
+                    db.dropCollection('dishes', (result) => {
+                        console.log('Dropped Collection:\n ', result);
+
+                        client.close();
+                    });
+                });
             });
+
         });
-    }); 
+    });
 });
